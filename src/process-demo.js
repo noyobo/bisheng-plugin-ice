@@ -124,17 +124,15 @@ module.exports = (markdownData, config) => {
       markdownData.cssLinkPath = path.join('/', config.fileDir, cssFileName);
     }
 
-    const demoHtmlPath = path.join(
+    const demoOutputFilePath = path.join(
       process.cwd(),
       config.outputDir,
       config.fileDir,
       jsFileName
     );
-    writeFile.sync(demoHtmlPath, html, err => {
+    writeFile(demoOutputFilePath, html, err => {
       if (err) {
         console.log(err);
-      } else {
-        console.log(demoHtmlPath);
       }
     });
     markdownData.src = path.join('/', config.fileDir, jsFileName);
