@@ -1,5 +1,8 @@
+'use strict';
+
 const fs = require('fs');
 const path = require('path');
+const writeFile = require('write');
 const JsonML = require('jsonml.js/lib/utils');
 // 这里获取的是运行目录的 package.json
 
@@ -15,7 +18,11 @@ const babelrc = {
   sourceMaps: 'inline',
   presets: ['es2015', 'react', 'stage-0'].map(m => {
     return require.resolve(`babel-preset-${m}`);
-  })
+  }),
+  plugins: [
+    require.resolve('babel-plugin-add-module-exports'),
+    require.resolve('babel-plugin-transform-decorators-legacy')
+  ]
 };
 
 function isStyleTag(node) {
@@ -39,14 +46,16 @@ module.exports = (markdownData, config) => {
   const contentChildren = JsonML.getChildren(markdownData.content);
 
   const codeIndex = contentChildren.findIndex(node => {
-    return JsonML.getTagName(node) === 'pre' &&
-      JsonML.getAttributes(node).lang === 'jsx';
+    return (
+      JsonML.getTagName(node) === 'pre' &&
+      JsonML.getAttributes(node).lang === 'jsx'
+    );
   });
 
   markdownData.content = contentChildren.slice(0, codeIndex); // 移除了 pre 的内容
   markdownData.highlightedCode = contentChildren[codeIndex].slice(0, 2);
 
-  const preview = ['pre', { lang: '__react' }];
+  const preview = ['pre', {lang: '__react'}];
 
   const rawCode = getCode(contentChildren[codeIndex]);
 
@@ -55,9 +64,11 @@ module.exports = (markdownData, config) => {
   markdownData.rawCode = rawCode;
   markdownData.preview = preview;
   const styleNode = contentChildren.filter(node => {
-    return isStyleTag(node) ||
+    return (
+      isStyleTag(node) ||
       (JsonML.getTagName(node) === 'pre' &&
-        JsonML.getAttributes(node).lang === 'css');
+        JsonML.getAttributes(node).lang === 'css')
+    );
   })[0];
 
   if (isStyleTag(styleNode)) {
@@ -70,8 +81,8 @@ module.exports = (markdownData, config) => {
     }
   } else if (styleNode) {
     const styleTag = contentChildren.filter(isStyleTag)[0];
-    const cssSource = getCode(styleNode) +
-      (styleTag ? JsonML.getChildren(styleTag)[0] : '');
+    const cssSource =
+      getCode(styleNode) + (styleTag ? JsonML.getChildren(styleTag)[0] : '');
 
     if (cssSource && cssSource.trim() !== '') {
       const cleanCssSource = cleanCSS.minify(cssSource);
@@ -115,10 +126,17 @@ module.exports = (markdownData, config) => {
       markdownData.cssLinkPath = path.join('/', config.fileDir, cssFileName);
     }
 
-    fs.writeFile(
-      path.join(process.cwd(), config.outputDir, config.fileDir, jsFileName),
-      html
+    const demoOutputFilePath = path.join(
+      process.cwd(),
+      config.outputDir,
+      config.fileDir,
+      jsFileName
     );
+    writeFile(demoOutputFilePath, html, err => {
+      if (err) {
+        console.log(err);
+      }
+    });
     markdownData.src = path.join('/', config.fileDir, jsFileName);
   }
   return markdownData;
