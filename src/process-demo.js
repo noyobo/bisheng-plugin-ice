@@ -1,16 +1,7 @@
 'use strict';
 
-const fs = require('fs');
-const path = require('path');
-const writeFile = require('write');
 const JsonML = require('jsonml.js/lib/utils');
 // 这里获取的是运行目录的 package.json
-
-const template = require('lodash.template');
-
-const babel = require('babel-core');
-const detective = require('detective-module');
-
 const cleanCSS = require('./utils/clean-css');
 const demoStyleScopo = require('./utils/demo-style-scope');
 
